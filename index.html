@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rocket SA — Despega sin límites</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-deep: #0a0e27;
+    --bg-mid: #12163a;
+    --flame-orange: #ff6b35;
+    --flame-gold: #ffb703;
+    --thrust-cyan: #00e5ff;
+    --nebula-purple: #b537f2;
+    --ink-white: #f4f2ff;
+    --ink-dim: #9aa0c3;
+    --line: rgba(244,242,255,0.12);
+  }
+
+  *{ margin:0; padding:0; box-sizing:border-box; }
+
+  html{ scroll-behavior:smooth; }
+
+  body{
+    background: var(--bg-deep);
+    color: var(--ink-white);
+    font-family: 'Inter', sans-serif;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  h1,h2,h3,.logo{
+    font-family: 'Space Grotesk', sans-serif;
+  }
+
+  /* ---------- Starfield ---------- */
+  #stars, #stars2, #stars3{
+    position: fixed;
+    top:0; left:0; width:100%; height:100%;
+    background: transparent;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .star{
+    position: absolute;
+    background: white;
+    border-radius: 50%;
+    animation: twinkle linear infinite;
+  }
+
+  @keyframes twinkle{
+    0%, 100%{ opacity: 0.2; }
+    50%{ opacity: 1; }
+  }
+
+  @keyframes drift{
+    from{ transform: translateY(0); }
+    to{ transform: translateY(-2000px); }
+  }
+
+  /* ---------- Nav ---------- */
+  nav{
+    position: fixed;
+    top:0; left:0; right:0;
+    z-index: 100;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding: 22px 6%;
+    background: rgba(10,14,39,0.55);
+    backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .logo{
+    font-weight: 700;
+    font-size: 1.4rem;
+    letter-spacing: 0.5px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+
+  .logo span{
+    background: linear-gradient(90deg, var(--flame-orange), var(--flame-gold));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .logo-mark{
+    width: 14px; height:14px;
+    border-radius: 50% 50% 50% 0;
+    background: linear-gradient(135deg, var(--thrust-cyan), var(--nebula-purple));
+    transform: rotate(45deg);
+    box-shadow: 0 0 14px var(--thrust-cyan);
+  }
+
+  nav ul{
+    list-style:none;
+    display:flex;
+    gap: 38px;
+  }
+
+  nav ul li a{
+    color: var(--ink-dim);
+    text-decoration:none;
+    font-size: 0.92rem;
+    font-weight: 500;
+    position: relative;
+    transition: color 0.3s;
+  }
+
+  nav ul li a::after{
+    content:'';
+    position:absolute;
+    left:0; bottom:-6px;
+    width:0; height:2px;
+    background: linear-gradient(90deg, var(--flame-orange), var(--thrust-cyan));
+    transition: width 0.3s ease;
+  }
+
+  nav ul li a:hover{ color: var(--ink-white); }
+  nav ul li a:hover::after{ width:100%; }
+
+  .nav-cta{
+    padding: 10px 22px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--flame-orange), var(--flame-gold));
+    color: #0a0e27;
+    font-weight: 600;
+    font-size: 0.88rem;
+    text-decoration:none;
+    box-shadow: 0 0 20px rgba(255,107,53,0.45);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+  }
+  .nav-cta:hover{ transform: translateY(-2px); box-shadow: 0 4px 28px rgba(255,107,53,0.7); }
+
+  @media (max-width: 860px){
+    nav ul{ display:none; }
+  }
+
+  /* ---------- Hero ---------- */
+  header.hero{
+    position: relative;
+    min-height: 100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding: 140px 6% 100px;
+    z-index: 2;
+    overflow: hidden;
+  }
+
+  .glow-orb{
+    position:absolute;
+    border-radius: 50%;
+    filter: blur(90px);
+    opacity: 0.55;
+    z-index: -1;
+  }
+  .glow-orb.one{ width:480px; height:480px; background: var(--nebula-purple); top:-120px; left:-120px; animation: float1 9s ease-in-out infinite; }
+  .glow-orb.two{ width:420px; height:420px; background: var(--flame-orange); bottom:-140px; right:-100px; animation: float2 11s ease-in-out infinite; }
+  .glow-orb.three{ width:300px; height:300px; background: var(--thrust-cyan); top:35%; right:10%; opacity:0.35; animation: float1 7s ease-in-out infinite reverse; }
+
+  @keyframes float1{ 0%,100%{ transform: translate(0,0);} 50%{ transform: translate(40px,60px);} }
+  @keyframes float2{ 0%,100%{ transform: translate(0,0);} 50%{ transform: translate(-50px,-40px);} }
+
+  .eyebrow{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding: 8px 18px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: rgba(255,255,255,0.04);
+    color: var(--thrust-cyan);
+    font-size: 0.8rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 32px;
+    animation: fadeUp 0.8s ease both;
+  }
+
+  .eyebrow::before{
+    content:'';
+    width:7px; height:7px;
+    border-radius:50%;
+    background: var(--thrust-cyan);
+    box-shadow: 0 0 10px var(--thrust-cyan);
+    animation: twinkle 1.8s ease-in-out infinite;
+  }
+
+  h1.title{
+    font-size: clamp(2.8rem, 7vw, 6rem);
+    font-weight: 700;
+    line-height: 1.02;
+    max-width: 1000px;
+    animation: fadeUp 0.9s 0.1s ease both;
+  }
+
+  h1.title .grad{
+    background: linear-gradient(90deg, var(--flame-orange) 0%, var(--flame-gold) 35%, var(--thrust-cyan) 70%, var(--nebula-purple) 100%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: shine 5s linear infinite;
+  }
+
+  @keyframes shine{
+    to{ background-position: 200% center; }
+  }
+
+  p.subtitle{
+    max-width: 620px;
+    margin: 26px auto 44px;
+    color: var(--ink-dim);
+    font-size: 1.15rem;
+    line-height: 1.6;
+    animation: fadeUp 0.9s 0.2s ease both;
+  }
+
+  .hero-actions{
+    display:flex;
+    gap: 18px;
+    flex-wrap: wrap;
+    justify-content:center;
+    animation: fadeUp 0.9s 0.3s ease both;
+  }
+
+  .btn-primary, .btn-ghost{
+    padding: 16px 34px;
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 1rem;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+    transition: all 0.3s ease;
+  }
+
+  .btn-primary{
+    background: linear-gradient(90deg, var(--flame-orange), var(--flame-gold));
+    color: #100a02;
+    box-shadow: 0 0 30px rgba(255,107,53,0.5);
+  }
+  .btn-primary:hover{ transform: translateY(-3px) scale(1.03); box-shadow: 0 8px 40px rgba(255,178,3,0.65); }
+
+  .btn-ghost{
+    border: 1px solid var(--line);
+    color: var(--ink-white);
+    background: rgba(255,255,255,0.03);
+  }
+  .btn-ghost:hover{ background: rgba(255,255,255,0.09); border-color: var(--thrust-cyan); }
+
+  @keyframes fadeUp{
+    from{ opacity:0; transform: translateY(24px);}
+    to{ opacity:1; transform: translateY(0);}
+  }
+
+  /* Rocket signature element */
+  .rocket-scene{
+    margin-top: 70px;
+    position: relative;
+    width: 100%;
+    max-width: 260px;
+    height: 340px;
+    animation: fadeUp 1s 0.4s ease both;
+  }
+
+  .rocket{
+    position:absolute;
+    left:50%;
+    top:0;
+    transform: translateX(-50%);
+    width: 90px;
+    animation: hover 3.2s ease-in-out infinite;
+  }
+
+  @keyframes hover{
+    0%,100%{ transform: translateX(-50%) translateY(0); }
+    50%{ transform: translateX(-50%) translateY(-18px); }
+  }
+
+  .flame{
+    position:absolute;
+    left:50%;
+    top: 205px;
+    transform: translateX(-50%);
+    width: 34px;
+    height: 90px;
+    background: linear-gradient(180deg, var(--thrust-cyan), var(--flame-gold) 55%, var(--flame-orange));
+    border-radius: 0 0 50% 50%;
+    filter: blur(2px);
+    animation: flicker 0.18s ease-in-out infinite alternate, hover 3.2s ease-in-out infinite;
+    transform-origin: top center;
+  }
+
+  @keyframes flicker{
+    from{ height: 90px; opacity: 0.9; }
+    to{ height: 60px; opacity: 1; }
+  }
+
+  .launch-glow{
+    position:absolute;
+    left:50%; top: 250px;
+    transform: translateX(-50%);
+    width: 140px; height: 140px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,178,3,0.55), transparent 70%);
+    filter: blur(10px);
+    animation: pulseGlow 2s ease-in-out infinite;
+  }
+
+  @keyframes pulseGlow{
+    0%,100%{ opacity: 0.5; transform: translateX(-50%) scale(0.9);}
+    50%{ opacity: 0.9; transform: translateX(-50%) scale(1.1);}
+  }
+
+  /* ---------- Section shared ---------- */
+  section{
+    position: relative;
+    z-index: 2;
+    padding: 130px 6%;
+  }
+
+  .section-head{
+    text-align:center;
+    max-width: 680px;
+    margin: 0 auto 70px;
+  }
+
+  .section-head .eyebrow{ margin-bottom: 18px; }
+
+  .section-head h2{
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 700;
+    margin-bottom: 18px;
+  }
+
+  .section-head p{ color: var(--ink-dim); font-size: 1.05rem; line-height:1.6; }
+
+  .reveal{
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+  }
+  .reveal.in{ opacity: 1; transform: translateY(0); }
+
+  /* ---------- Stats ---------- */
+  .stats{
+    display:grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .stat-card{
+    text-align:center;
+    padding: 34px 18px;
+    border-radius: 20px;
+    border: 1px solid var(--line);
+    background: linear-gradient(160deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01));
+  }
+
+  .stat-num{
+    font-family:'Space Grotesk',sans-serif;
+    font-size: 2.6rem;
+    font-weight:700;
+    background: linear-gradient(90deg, var(--flame-gold), var(--thrust-cyan));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+
+  .stat-label{ color: var(--ink-dim); font-size: 0.9rem; margin-top: 8px; }
+
+  @media (max-width: 780px){ .stats{ grid-template-columns: repeat(2,1fr); } }
+
+  /* ---------- Services ---------- */
+  .services-grid{
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 28px;
+    max-width: 1150px;
+    margin: 0 auto;
+  }
+
+  .service-card{
+    position: relative;
+    padding: 40px 30px;
+    border-radius: 22px;
+    background: var(--bg-mid);
+    border: 1px solid var(--line);
+    overflow: hidden;
+    transition: transform 0.35s ease, border-color 0.35s ease;
+  }
+
+  .service-card::before{
+    content:'';
+    position:absolute;
+    inset:0;
+    background: radial-gradient(circle at 30% 0%, rgba(0,229,255,0.18), transparent 55%);
+    opacity: 0;
+    transition: opacity 0.35s ease;
+  }
+
+  .service-card:hover{ transform: translateY(-10px); border-color: rgba(0,229,255,0.4); }
+  .service-card:hover::before{ opacity: 1; }
+
+  .service-icon{
+    width: 54px; height: 54px;
+    border-radius: 14px;
+    display:flex; align-items:center; justify-content:center;
+    font-size: 1.5rem;
+    margin-bottom: 22px;
+    background: linear-gradient(135deg, var(--flame-orange), var(--nebula-purple));
+    box-shadow: 0 8px 24px rgba(181,55,242,0.35);
+  }
+
+  .service-card h3{ font-size: 1.25rem; margin-bottom: 12px; }
+  .service-card p{ color: var(--ink-dim); font-size: 0.95rem; line-height: 1.6; }
+
+  @media (max-width: 900px){ .services-grid{ grid-template-columns: 1fr; } }
+
+  /* ---------- Process timeline ---------- */
+  .timeline{
+    max-width: 800px;
+    margin: 0 auto;
+    position: relative;
+  }
+  .timeline::before{
+    content:'';
+    position:absolute;
+    left: 27px; top:0; bottom:0;
+    width: 2px;
+    background: linear-gradient(180deg, var(--flame-orange), var(--thrust-cyan), var(--nebula-purple));
+  }
+  .t-item{
+    position:relative;
+    padding-left: 76px;
+    margin-bottom: 52px;
+  }
+  .t-item:last-child{ margin-bottom: 0; }
+  .t-num{
+    position:absolute;
+    left:0; top:0;
+    width: 56px; height: 56px;
+    border-radius:50%;
+    background: var(--bg-mid);
+    border: 1px solid var(--line);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:700;
+    color: var(--flame-gold);
+  }
+  .t-item h3{ font-size: 1.15rem; margin-bottom: 8px; }
+  .t-item p{ color: var(--ink-dim); font-size: 0.95rem; line-height:1.6; }
+
+  /* ---------- Testimonial / CTA banner ---------- */
+  .cta-banner{
+    position: relative;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 70px 6%;
+    border-radius: 32px;
+    text-align:center;
+    overflow: hidden;
+    background: linear-gradient(135deg, #1a1140, #2a0f3d);
+    border: 1px solid var(--line);
+  }
+  .cta-banner::after{
+    content:'';
+    position:absolute;
+    inset:-2px;
+    background: linear-gradient(120deg, var(--flame-orange), var(--nebula-purple), var(--thrust-cyan));
+    z-index:-1;
+    filter: blur(40px);
+    opacity: 0.35;
+  }
+  .cta-banner h2{ font-size: clamp(1.8rem,4vw,2.6rem); margin-bottom: 16px; }
+  .cta-banner p{ color: var(--ink-dim); max-width: 520px; margin: 0 auto 34px; }
+
+  /* ---------- Footer ---------- */
+  footer{
+    position: relative;
+    z-index: 2;
+    padding: 60px 6% 34px;
+    border-top: 1px solid var(--line);
+    text-align:center;
+    color: var(--ink-dim);
+    font-size: 0.88rem;
+  }
+  footer .logo{ justify-content:center; margin-bottom: 16px; }
+
+  /* Scroll to top decorative */
+  ::selection{ background: var(--flame-orange); color:#0a0e27; }
+</style>
+</head>
+<body>
+
+<div id="stars"></div>
+<div id="stars2"></div>
+
+<nav>
+  <div class="logo"><span class="logo-mark"></span>ROCKET <span>SA</span></div>
+  <ul>
+    <li><a href="#servicios">Servicios</a></li>
+    <li><a href="#proceso">Proceso</a></li>
+    <li><a href="#nosotros">Nosotros</a></li>
+    <li><a href="#contacto">Contacto</a></li>
+  </ul>
+  <a href="#contacto" class="nav-cta">Hablemos</a>
+</nav>
+
+<header class="hero">
+  <div class="glow-orb one"></div>
+  <div class="glow-orb two"></div>
+  <div class="glow-orb three"></div>
+
+  <div class="eyebrow">Impulso desde Lima para el mundo</div>
+  <h1 class="title">Tu negocio, <span class="grad">rumbo a la órbita.</span></h1>
+  <p class="subtitle">En Rocket SA convertimos ideas en despegues reales: estrategia, tecnología y diseño trabajando juntos para acelerar el crecimiento de tu empresa.</p>
+
+  <div class="hero-actions">
+    <a href="#contacto" class="btn-primary">🚀 Iniciar proyecto</a>
+    <a href="#servicios" class="btn-ghost">Ver servicios</a>
+  </div>
+
+  <div class="rocket-scene">
+    <div class="launch-glow"></div>
+    <svg class="rocket" viewBox="0 0 100 220" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="bodyGrad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#f4f2ff"/>
+          <stop offset="100%" stop-color="#b8bde0"/>
+        </linearGradient>
+        <linearGradient id="finGrad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#ff6b35"/>
+          <stop offset="100%" stop-color="#b537f2"/>
+        </linearGradient>
+      </defs>
+      <ellipse cx="50" cy="45" rx="10" ry="14" fill="#00e5ff"/>
+      <path d="M50 5 C70 30 72 90 72 130 L28 130 C28 90 30 30 50 5 Z" fill="url(#bodyGrad)"/>
+      <path d="M28 110 L5 150 L28 140 Z" fill="url(#finGrad)"/>
+      <path d="M72 110 L95 150 L72 140 Z" fill="url(#finGrad)"/>
+      <rect x="28" y="128" width="44" height="14" rx="4" fill="#ffb703"/>
+    </svg>
+    <div class="flame"></div>
+  </div>
+</header>
+
+<section id="stats-section">
+  <div class="stats reveal">
+    <div class="stat-card"><div class="stat-num">120+</div><div class="stat-label">Proyectos lanzados</div></div>
+    <div class="stat-card"><div class="stat-num">98%</div><div class="stat-label">Clientes satisfechos</div></div>
+    <div class="stat-card"><div class="stat-num">15</div><div class="stat-label">Países alcanzados</div></div>
+    <div class="stat-card"><div class="stat-num">24/7</div><div class="stat-label">Soporte activo</div></div>
+  </div>
+</section>
+
+<section id="servicios">
+  <div class="section-head reveal">
+    <div class="eyebrow">Qué hacemos</div>
+    <h2>Combustible para cada etapa de tu negocio</h2>
+    <p>Desde el diseño de marca hasta la plataforma tecnológica que lo sostiene todo, en Rocket SA armamos el equipo de misión completo.</p>
+  </div>
+
+  <div class="services-grid">
+    <div class="service-card reveal">
+      <div class="service-icon">🛰️</div>
+      <h3>Estrategia digital</h3>
+      <p>Definimos la trayectoria: investigación de mercado, posicionamiento y un plan claro para crecer sin perder el rumbo.</p>
+    </div>
+    <div class="service-card reveal">
+      <div class="service-icon">💻</div>
+      <h3>Desarrollo web y software</h3>
+      <p>Construimos productos digitales rápidos, seguros y escalables, a la medida de lo que tu empresa necesita hoy y mañana.</p>
+    </div>
+    <div class="service-card reveal">
+      <div class="service-icon">🎨</div>
+      <h3>Diseño de marca</h3>
+      <p>Creamos identidades visuales memorables que comunican quién eres y por qué tu cliente debería elegirte a ti.</p>
+    </div>
+    <div class="service-card reveal">
+      <div class="service-icon">📈</div>
+      <h3>Marketing de crecimiento</h3>
+      <p>Campañas medibles en los canales correctos, optimizadas constantemente para bajar el costo de cada resultado.</p>
+    </div>
+    <div class="service-card reveal">
+      <div class="service-icon">☁️</div>
+      <h3>Infraestructura en la nube</h3>
+      <p>Arquitecturas robustas que aguantan picos de tráfico y crecen junto con tu operación, sin dolores de cabeza.</p>
+    </div>
+    <div class="service-card reveal">
+      <div class="service-icon">🤝</div>
+      <h3>Consultoría integral</h3>
+      <p>Acompañamiento cercano para tomar mejores decisiones de negocio, con datos reales y visión de largo plazo.</p>
+    </div>
+  </div>
+</section>
+
+<section id="proceso">
+  <div class="section-head reveal">
+    <div class="eyebrow">Cómo trabajamos</div>
+    <h2>La cuenta regresiva hacia tu lanzamiento</h2>
+    <p>Un proceso simple y transparente, pensado para que sepas exactamente en qué etapa está tu proyecto.</p>
+  </div>
+
+  <div class="timeline reveal">
+    <div class="t-item">
+      <div class="t-num">01</div>
+      <h3>Diagnóstico</h3>
+      <p>Escuchamos tu negocio, entendemos tus objetivos y mapeamos oportunidades reales de crecimiento.</p>
+    </div>
+    <div class="t-item">
+      <div class="t-num">02</div>
+      <h3>Diseño de misión</h3>
+      <p>Armamos la estrategia y el plan de trabajo, con hitos claros y responsables definidos.</p>
+    </div>
+    <div class="t-item">
+      <div class="t-num">03</div>
+      <h3>Construcción</h3>
+      <p>Nuestro equipo ejecuta: diseño, desarrollo y contenido avanzan en paralelo con reportes constantes.</p>
+    </div>
+    <div class="t-item">
+      <div class="t-num">04</div>
+      <h3>Despegue y optimización</h3>
+      <p>Lanzamos, medimos resultados y ajustamos en tiempo real para maximizar el impacto.</p>
+    </div>
+  </div>
+</section>
+
+<section id="nosotros">
+  <div class="cta-banner reveal">
+    <h2>Rocket SA no vende promesas, entrega resultados.</h2>
+    <p>Somos un equipo multidisciplinario que cree que la tecnología y el buen diseño pueden llevar a cualquier empresa más lejos de lo que imagina.</p>
+    <a href="#contacto" class="btn-primary">🚀 Quiero despegar</a>
+  </div>
+</section>
+
+<section id="contacto">
+  <div class="section-head reveal">
+    <div class="eyebrow">Contacto</div>
+    <h2>Hablemos de tu próximo lanzamiento</h2>
+    <p>Cuéntanos sobre tu proyecto y te contactamos en menos de 24 horas.</p>
+  </div>
+
+  <div class="reveal" style="max-width:560px;margin:0 auto;padding:40px;border-radius:22px;background:var(--bg-mid);border:1px solid var(--line);">
+    <p style="margin-bottom:22px;color:var(--ink-dim);">📧 hola@rocketsa.com &nbsp;·&nbsp; 📍 Lima, Perú &nbsp;·&nbsp; 📞 +51 999 999 999</p>
+    <a href="mailto:hola@rocketsa.com" class="btn-primary" style="width:100%;justify-content:center;">Escribir un correo</a>
+  </div>
+</section>
+
+<footer>
+  <div class="logo"><span class="logo-mark"></span>ROCKET <span>SA</span></div>
+  <p>© 2026 Rocket SA. Todos los derechos reservados. Hecho con 🚀 en Lima, Perú.</p>
+</footer>
+
+<script>
+  // Starfield generator
+  function makeStars(id, count, sizeMax, speed){
+    const container = document.getElementById(id);
+    for(let i=0;i<count;i++){
+      const s = document.createElement('div');
+      s.className='star';
+      const size = Math.random()*sizeMax + 0.5;
+      s.style.width = size+'px';
+      s.style.height = size+'px';
+      s.style.left = Math.random()*100+'%';
+      s.style.top = Math.random()*100+'%';
+      s.style.animationDuration = (Math.random()*3+speed)+'s';
+      s.style.animationDelay = (Math.random()*4)+'s';
+      container.appendChild(s);
+    }
+  }
+  makeStars('stars', 90, 2, 2);
+  makeStars('stars2', 45, 3, 3);
+
+  // Scroll reveal
+  const observer = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting){ e.target.classList.add('in'); }
+    });
+  }, { threshold: 0.15 });
+  document.querySelectorAll('.reveal').forEach(el=> observer.observe(el));
+</script>
+
+</body>
+</html>
